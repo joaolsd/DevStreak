@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew install *)",
+      "Bash(xcodebuild -project DevStreak.xcodeproj -scheme DevStreak -destination 'generic/platform=iOS Simulator' -configuration Debug CODE_SIGNING_ALLOWED=NO build)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL', Image.__version__\\)\")",
+      "Bash(magick -background none -density 300 icon.svg -resize 1024x1024 icon.png)",
+      "Bash(magick -density 300 -background none icon.svg -resize 1024x1024 -depth 8 PNG24:icon.png)",
+      "Bash(magick identify *)",
+      "Bash(xcodegen generate *)",
+      "Bash(xcrun simctl *)",
+      "Bash(xcodebuild -project DevStreak.xcodeproj -scheme DevStreak -destination 'platform=iOS Simulator,id=092B56E7-F0C3-4AAF-B5D5-579A5546D112' -configuration Debug build)"
+    ]
+  }
+}
