@@ -113,11 +113,13 @@ struct HeatMapView: View {
             return Color(.systemFill).opacity(0.4)
         }
         if s.freezeUsed { return .blue.opacity(0.45) }
+        // Manual override (no GitHub verification) shown in yellow/muted
+        let base: Color = s.manualOverride ? .yellow : .orange
         switch s.minutes {
-        case 120...: return .orange
-        case 90...:  return .orange.opacity(0.75)
-        case 60...:  return .orange.opacity(0.50)
-        case 30...:  return .orange.opacity(0.30)
+        case 120...: return base
+        case 90...:  return base.opacity(0.75)
+        case 60...:  return base.opacity(0.55)
+        case 30...:  return base.opacity(0.35)
         default:     return Color(.systemFill)
         }
     }

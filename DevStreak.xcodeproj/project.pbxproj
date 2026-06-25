@@ -21,6 +21,10 @@
 		B54590B15E37FD59E239A4F6 /* AppConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8F48BED99AAFBD3BA1628F /* AppConstants.swift */; };
 		C6ADF5AB57FE647AFB4B6472 /* HeatMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94E510F68AD0DE5C936FF46A /* HeatMapView.swift */; };
 		CBCF8A4D15B81DA0F31FF603 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101151099355822E9CC31ADD /* DashboardView.swift */; };
+		CF811E1B2FED97AF00029814 /* GitHubService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF811E192FED97AF00029814 /* GitHubService.swift */; };
+		CF811E1C2FED97AF00029814 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF811E1A2FED97AF00029814 /* KeychainHelper.swift */; };
+		CF811E1D2FED97AF00029814 /* GitHubService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF811E192FED97AF00029814 /* GitHubService.swift */; };
+		CF811E1E2FED97AF00029814 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF811E1A2FED97AF00029814 /* KeychainHelper.swift */; };
 		E07A0B5D1C80000AA3ADDF2A /* DevStreakWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9853865D16AECBCE3BE3706 /* DevStreakWidget.swift */; };
 		F61F6A2124D3D74CD6159460 /* DevStreakWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F98635D9B8C389E79A3021D0 /* DevStreakWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -63,6 +67,8 @@
 		74AD9640D5A398D4C6FC5FC6 /* DevStreak.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevStreak.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		771CDD303579F1669F39B3E6 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		94E510F68AD0DE5C936FF46A /* HeatMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeatMapView.swift; sourceTree = "<group>"; };
+		CF811E192FED97AF00029814 /* GitHubService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubService.swift; sourceTree = "<group>"; };
+		CF811E1A2FED97AF00029814 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		D3933868E953B54C41E175A2 /* DateHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateHelpers.swift; sourceTree = "<group>"; };
 		DBD971ED8108101F5CEA76EB /* DevStreakApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStreakApp.swift; sourceTree = "<group>"; };
 		E9853865D16AECBCE3BE3706 /* DevStreakWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevStreakWidget.swift; sourceTree = "<group>"; };
@@ -83,6 +89,8 @@
 		2BD826D489C27E8806775A8E /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CF811E192FED97AF00029814 /* GitHubService.swift */,
+				CF811E1A2FED97AF00029814 /* KeychainHelper.swift */,
 				EC8F48BED99AAFBD3BA1628F /* AppConstants.swift */,
 				51D62C64C28807B6C26B1628 /* CodingSession.swift */,
 				D3933868E953B54C41E175A2 /* DateHelpers.swift */,
@@ -203,9 +211,6 @@
 					CB2AEFD3B6C3B43ACB57AB96 = {
 						ProvisioningStyle = Automatic;
 					};
-					FBC306483EF67E2E820021AF = {
-						ProvisioningStyle = Automatic;
-					};
 				};
 			};
 			buildConfigurationList = 3D9AF6BA02D9D9327E39AAA6 /* Build configuration list for PBXProject "DevStreak" */;
@@ -245,6 +250,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				9BE8B59165F0AAA316A5363D /* AppConstants.swift in Sources */,
+				CF811E1D2FED97AF00029814 /* GitHubService.swift in Sources */,
+				CF811E1E2FED97AF00029814 /* KeychainHelper.swift in Sources */,
 				92CC6CD7A30D379D64FAC066 /* DateHelpers.swift in Sources */,
 				E07A0B5D1C80000AA3ADDF2A /* DevStreakWidget.swift in Sources */,
 			);
@@ -263,6 +270,8 @@
 				C6ADF5AB57FE647AFB4B6472 /* HeatMapView.swift in Sources */,
 				3CD29FA83B0DA2873034CC63 /* NotificationManager.swift in Sources */,
 				2D12674CC9C512AC77B58E43 /* SettingsView.swift in Sources */,
+				CF811E1B2FED97AF00029814 /* GitHubService.swift in Sources */,
+				CF811E1C2FED97AF00029814 /* KeychainHelper.swift in Sources */,
 				07736E02BE2D3E5FB6C32B9E /* StreakLogic.swift in Sources */,
 				AA0FC7B42B3B053757428DA0 /* StreakViewModel.swift in Sources */,
 			);
@@ -346,7 +355,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = DevStreak/DevStreak.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 98N63T47B5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -358,6 +368,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.bondis.devstreak;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -455,7 +466,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = DevStreak/DevStreak.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 98N63T47B5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -467,6 +479,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = org.bondis.devstreak;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

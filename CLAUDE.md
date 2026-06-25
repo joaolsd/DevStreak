@@ -15,6 +15,8 @@ DevStreak/
 │   │   ├── AppConstants.swift
 │   │   ├── CodingSession.swift
 │   │   ├── DateHelpers.swift
+│   │   ├── GitHubService.swift
+│   │   ├── KeychainHelper.swift
 │   │   └── StreakLogic.swift
 │   ├── ViewModels/
 │   │   └── StreakViewModel.swift
@@ -62,7 +64,19 @@ In Xcode for BOTH targets (DevStreak + DevStreakWidget):
 Main app target only:
 - Signing & Capabilities → + Capability → Push Notifications
 
-### 5. Replace the bundle ID in AppConstants.swift
+### 5. Add Keychain Sharing capability (for GitHub token)
+
+Main app target only:
+- Signing & Capabilities → + Capability → Keychain Sharing
+- Add keychain group: `com.yourname.devstreak`
+
+### 6. GitHub Personal Access Token scope
+
+The token stored in Keychain needs only the `repo` scope (for private repos)
+or no scopes at all (for public repos only — the public Events API is unauthenticated).
+Create one at: https://github.com/settings/tokens
+
+### 7. Replace the bundle ID in AppConstants.swift
 
 Edit `DevStreak/Models/AppConstants.swift`:
 ```swift

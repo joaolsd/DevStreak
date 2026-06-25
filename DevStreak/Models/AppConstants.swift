@@ -15,7 +15,7 @@ enum AppConstants {
     static let seasonWeeks = 4
 
     /// UserDefaults / AppGroup suite name — must match widget target.
-    static let appGroupID = "group.org.bondis.devstreak"
+    static let appGroupID = "group.com.yourname.devstreak"
 
     // UserDefaults keys
     static let freezesLeftKey      = "freezesLeft"
@@ -23,4 +23,15 @@ enum AppConstants {
     static let lastSeasonScoreKey  = "lastSeasonScore"
     static let reminderHourKey     = "reminderHour"
     static let reminderMinuteKey   = "reminderMinute"
+
+    // GitHub verification
+    /// Minimum combined lines changed (additions + deletions) for a non-trivial commit.
+    static let githubMinNetLines   = 10
+    /// Minimum files touched — either this OR minNetLines must be met.
+    static let githubMinFiles      = 2
+    /// UserDefaults keys
+    static let githubUsernameKey   = "githubUsername"
+    // Token is stored in Keychain, not UserDefaults
+    static let keychainTokenService = "com.yourname.devstreak.github"
+    static let keychainTokenAccount = "pat"
 }

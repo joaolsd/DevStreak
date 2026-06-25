@@ -16,7 +16,7 @@ struct DevStreakEntry: TimelineEntry {
 struct DevStreakProvider: TimelineProvider {
 
     private var defaults: UserDefaults {
-        UserDefaults(suiteName: AppConstants.appGroupID) ?? .standard
+        UserDefaults(suiteName: "group.com.yourname.devstreak") ?? .standard
     }
 
     func placeholder(in context: Context) -> DevStreakEntry {

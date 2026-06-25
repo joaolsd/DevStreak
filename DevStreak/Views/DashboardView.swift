@@ -20,10 +20,26 @@ struct DashboardView: View {
             .navigationTitle("DevStreak")
             .navigationBarTitleDisplayMode(.inline)
             .background(Color(.systemGroupedBackground))
+            .sheet(isPresented: shouldShowVerificationSheet) {
+                VerificationSheet(vm: vm, pendingMinutes: $minuteInput)
+            }
         }
     }
 
+    private var shouldShowVerificationSheet: Binding<Bool> {
+        Binding(
+            get: {
+                switch vm.verificationState {
+                case .idle, .checking, .verified: return false
+                default: return true
+                }
+            },
+            set: { if !$0 { vm.dismissVerification() } }
+        )
+    }
+
     // MARK: – Streak hero
+
     private var streakHero: some View {
         VStack(spacing: 4) {
             HStack(alignment: .lastTextBaseline, spacing: 4) {
@@ -54,9 +70,18 @@ struct DashboardView: View {
                     .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.blue)
             } else if s.isQualified {
-                Label("Done · \(s.minutes) min", systemImage: "checkmark.circle.fill")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.green)
+                HStack(spacing: 6) {
+                    Label("Done · \(s.minutes) min", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    if s.githubVerified {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(.green.opacity(0.7))
+                    } else if s.manualOverride {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.yellow.opacity(0.8))
+                    }
+                }
+                .font(.system(.caption, design: .monospaced))
             } else {
                 Text("\(s.minutes) / \(AppConstants.dailyGoalMinutes) min")
                     .font(.system(.caption, design: .monospaced))
@@ -70,6 +95,7 @@ struct DashboardView: View {
     }
 
     // MARK: – Stats grid
+
     private var statsGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
             StatTile(label: "Season score", value: "\(vm.currentSeasonScore)",
@@ -92,19 +118,18 @@ struct DashboardView: View {
     }
 
     // MARK: – Perfect week badge
+
     private var perfectWeekBadge: some View {
         HStack(spacing: 12) {
-            Image(systemName: "trophy.fill")
-                .foregroundStyle(.yellow)
+            Image(systemName: "trophy.fill").foregroundStyle(.yellow)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(vm.consecutivePerfectWeeks) perfect week\(vm.consecutivePerfectWeeks > 1 ? "s" : "")")
-                    .font(.system(.subheadline, design: .monospaced, weight: .semibold))
+                    .font(.subheadline.weight(.semibold).monospaced())
                 Text(perfectWeekSub)
                     .font(.system(.caption2, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            // Pips
             HStack(spacing: 4) {
                 ForEach(0..<3) { i in
                     Circle()
@@ -126,11 +151,18 @@ struct DashboardView: View {
     }
 
     // MARK: – Log panel
+
     private var logPanel: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("LOG SESSION")
-                .font(.system(.caption2, design: .monospaced, weight: .semibold))
-                .foregroundStyle(.secondary)
+            HStack {
+                Text("LOG SESSION")
+                    .font(.system(.caption2, design: .monospaced, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if vm.githubEnabled {
+                    githubStatusBadge
+                }
+            }
 
             HStack(spacing: 10) {
                 TextField("minutes", text: $minuteInput)
@@ -143,18 +175,24 @@ struct DashboardView: View {
                     .frame(width: 110)
 
                 Button(action: submitLog) {
-                    Text("LOG")
-                        .font(.system(.subheadline, design: .monospaced, weight: .bold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 11)
-                        .background(.orange, in: RoundedRectangle(cornerRadius: 8))
-                        .foregroundStyle(.black)
+                    Group {
+                        if case .checking = vm.verificationState {
+                            ProgressView().tint(.black)
+                        } else {
+                            Text("LOG")
+                                .font(.system(.subheadline, design: .monospaced, weight: .bold))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 11)
+                    .background(.orange, in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(.black)
                 }
+                .disabled(vm.verificationState == .checking.self)
 
-                // Quick +30 / +60
                 VStack(spacing: 6) {
-                    quickButton("+30") { vm.logMinutes(30) }
-                    quickButton("+60") { vm.logMinutes(60) }
+                    quickButton("+30") { vm.requestLogMinutes(30) }
+                    quickButton("+60") { vm.requestLogMinutes(60) }
                 }
             }
 
@@ -172,6 +210,19 @@ struct DashboardView: View {
         .background(.background, in: RoundedRectangle(cornerRadius: 16))
     }
 
+    @ViewBuilder
+    private var githubStatusBadge: some View {
+        if vm.todaySession?.githubVerified == true {
+            Label("GitHub verified", systemImage: "checkmark.seal.fill")
+                .font(.system(.caption2, design: .monospaced))
+                .foregroundStyle(.green)
+        } else {
+            Label("GitHub check on log", systemImage: "chevron.left.forwardslash.chevron.right")
+                .font(.system(.caption2, design: .monospaced))
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private func quickButton(_ label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
@@ -185,12 +236,13 @@ struct DashboardView: View {
 
     private func submitLog() {
         guard let m = Int(minuteInput), m > 0 else { return }
-        vm.logMinutes(m)
-        minuteInput = ""
         inputFocused = false
+        vm.requestLogMinutes(m)
+        minuteInput = ""
     }
 
-    // MARK: – Season progress bar
+    // MARK: – Season bar
+
     private var seasonBar: some View {
         let range   = vm.seasonRange
         let total   = Double(AppConstants.seasonWeeks * 7)
@@ -213,9 +265,7 @@ struct DashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            ProgressView(value: progress)
-                .tint(.orange)
-                .scaleEffect(x: 1, y: 1.6)
+            ProgressView(value: progress).tint(.orange).scaleEffect(x: 1, y: 1.6)
             Text("30–59m=1pt · 60–89m=2pt · 90–119m=3pt · 120+m=4pt")
                 .font(.system(size: 9, design: .monospaced))
                 .foregroundStyle(.tertiary)
@@ -224,6 +274,144 @@ struct DashboardView: View {
         .background(.background, in: RoundedRectangle(cornerRadius: 12))
     }
 }
+
+// MARK: – Verification sheet
+
+struct VerificationSheet: View {
+    var vm: StreakViewModel
+    @Binding var pendingMinutes: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                icon
+                title
+                detail
+                actions
+                Spacer()
+            }
+            .padding(28)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        vm.dismissVerification()
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+        switch vm.verificationState {
+        case .onlyTrivial:
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 48)).foregroundStyle(.yellow)
+        case .noCommits:
+            Image(systemName: "xmark.circle.fill")
+                .font(.system(size: 48)).foregroundStyle(.orange)
+        case .networkError:
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 48)).foregroundStyle(.red)
+        default:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private var title: some View {
+        switch vm.verificationState {
+        case .onlyTrivial:
+            Text("Only trivial commits found")
+                .font(.system(.title3, design: .monospaced, weight: .bold))
+        case .noCommits:
+            Text("No commits today")
+                .font(.system(.title3, design: .monospaced, weight: .bold))
+        case .networkError:
+            Text("GitHub unreachable")
+                .font(.system(.title3, design: .monospaced, weight: .bold))
+        default:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private var detail: some View {
+        switch vm.verificationState {
+        case .onlyTrivial(let commits):
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Commits found but none cleared the threshold (±\(AppConstants.githubMinNetLines) lines or \(AppConstants.githubMinFiles)+ files):")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                ForEach(commits.prefix(3), id: \.sha) { c in
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("·")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(c.message.components(separatedBy: "\n").first ?? c.message)
+                                .font(.system(.caption, design: .monospaced))
+                                .lineLimit(1)
+                            Text("+\(c.additions) −\(c.deletions) · \(c.filesChanged) file\(c.filesChanged == 1 ? "" : "s")")
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+            }
+        case .noCommits:
+            Text("No push events found for @\(vm.githubUsername) today. Go write some code, then log your session.")
+                .font(.system(.callout, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        case .networkError(let msg):
+            Text("Could not reach GitHub: \(msg)\nYou can log anyway — it'll show as unverified.")
+                .font(.system(.callout, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        default:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        VStack(spacing: 12) {
+            // Log anyway (always available, marks as manual override)
+            Button(action: {
+                vm.forceLogPendingMinutes()
+                dismiss()
+            }) {
+                Text("Log anyway (unverified)")
+                    .font(.system(.subheadline, design: .monospaced))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(Color(.secondarySystemGroupedBackground),
+                                in: RoundedRectangle(cornerRadius: 10))
+                    .foregroundStyle(.secondary)
+            }
+
+            // Dismiss — go commit something
+            if case .noCommits = vm.verificationState {
+                Button(action: {
+                    vm.dismissVerification()
+                    dismiss()
+                }) {
+                    Text("Go write some code first")
+                        .font(.system(.subheadline, design: .monospaced, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 13)
+                        .background(.orange, in: RoundedRectangle(cornerRadius: 10))
+                        .foregroundStyle(.black)
+                }
+            }
+        }
+    }
+}
+
+// MARK: – Stat tile (shared)
 
 struct StatTile: View {
     let label: String
@@ -248,5 +436,16 @@ struct StatTile: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// Needed for the disabled check
+extension StreakViewModel.VerificationState: Equatable {
+    static func == (lhs: StreakViewModel.VerificationState, rhs: StreakViewModel.VerificationState) -> Bool {
+        switch (lhs, rhs) {
+        case (.idle, .idle), (.checking, .checking),
+             (.noCommits, .noCommits), (.notConfigured, .notConfigured): return true
+        default: return false
+        }
     }
 }

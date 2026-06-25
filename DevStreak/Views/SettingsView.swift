@@ -8,6 +8,13 @@ struct SettingsView: View {
     @State private var authStatus      = ""
     @State private var isLoading       = true
 
+    // GitHub config
+    @State private var githubUsername  = ""
+    @State private var githubToken     = ""
+    @State private var showToken       = false
+    @State private var githubTestResult: String? = nil
+    @State private var isTesting       = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -17,6 +24,15 @@ struct SettingsView: View {
                     Text("Daily Reminder")
                 } footer: {
                     Text(authStatus)
+                        .font(.system(.caption2, design: .monospaced))
+                }
+
+                Section {
+                    githubSection
+                } header: {
+                    Text("GitHub Verification")
+                } footer: {
+                    Text("Logs without a qualifying commit are marked unverified and shown in yellow on the heat map. A qualifying commit has ±\(AppConstants.githubMinNetLines)+ lines or \(AppConstants.githubMinFiles)+ files changed.")
                         .font(.system(.caption2, design: .monospaced))
                 }
 
@@ -41,10 +57,112 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .task { await loadNotificationState() }
+            .onAppear { loadGitHubConfig() }
         }
     }
 
-    // MARK: – Reminder row
+    // MARK: – GitHub section
+
+    @ViewBuilder
+    private var githubSection: some View {
+        HStack {
+            Text("Username")
+                .font(.system(.body, design: .monospaced))
+            Spacer()
+            TextField("your-handle", text: $githubUsername)
+                .font(.system(.body, design: .monospaced))
+                .multilineTextAlignment(.trailing)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .onSubmit { vm.saveGitHubUsername(githubUsername) }
+        }
+
+        HStack {
+            Text("Token")
+                .font(.system(.body, design: .monospaced))
+            Spacer()
+            Group {
+                if showToken {
+                    TextField("ghp_…", text: $githubToken)
+                } else {
+                    SecureField("ghp_…", text: $githubToken)
+                }
+            }
+            .font(.system(.body, design: .monospaced))
+            .multilineTextAlignment(.trailing)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+            .onSubmit { vm.saveGitHubToken(githubToken) }
+
+            Button(action: { showToken.toggle() }) {
+                Image(systemName: showToken ? "eye.slash" : "eye")
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        HStack(spacing: 12) {
+            Button("Save") {
+                vm.saveGitHubUsername(githubUsername)
+                vm.saveGitHubToken(githubToken)
+            }
+            .font(.system(.subheadline, design: .monospaced))
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+
+            Button("Test") {
+                Task { await testGitHub() }
+            }
+            .font(.system(.subheadline, design: .monospaced))
+            .disabled(githubUsername.isEmpty || isTesting)
+
+            if isTesting { ProgressView() }
+        }
+
+        if let result = githubTestResult {
+            Text(result)
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(result.hasPrefix("✓") ? .green : .orange)
+        }
+
+        if vm.githubEnabled {
+            Button("Clear GitHub config", role: .destructive) {
+                vm.clearGitHubConfig()
+                githubUsername = ""
+                githubToken    = ""
+                githubTestResult = nil
+            }
+            .font(.system(.subheadline, design: .monospaced))
+        }
+    }
+
+    private func loadGitHubConfig() {
+        githubUsername = vm.githubUsername
+        // Don't pre-fill token — user must re-enter if they want to change it
+    }
+
+    private func testGitHub() async {
+        isTesting = true
+        githubTestResult = nil
+        let token = githubToken.isEmpty
+            ? KeychainHelper.load(service: AppConstants.keychainTokenService, account: AppConstants.keychainTokenAccount)
+            : githubToken
+        let result = await GitHubService.shared.verifyToday(username: githubUsername, token: token)
+        switch result {
+        case .verified(let commits):
+            githubTestResult = "✓ Found \(commits.count) qualifying commit\(commits.count == 1 ? "" : "s") today"
+        case .onlyTrivial(let commits):
+            githubTestResult = "⚠ \(commits.count) commit\(commits.count == 1 ? "" : "s") found but all below threshold"
+        case .noCommitsToday:
+            githubTestResult = "No commits pushed today (API reachable)"
+        case .networkError(let msg):
+            githubTestResult = "Network error: \(msg)"
+        case .notConfigured:
+            githubTestResult = "Username not set"
+        }
+        isTesting = false
+    }
+
+    // MARK: – Reminder section
 
     @ViewBuilder
     private var reminderRow: some View {
